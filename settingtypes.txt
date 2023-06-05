@@ -1,0 +1,2 @@
+punch_particles (Show particles when a node is punched) bool true
+place_particles (Show particles when a node is placed) bool true
