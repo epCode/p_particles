@@ -1,6 +1,7 @@
 -- This code creates particles
 -- viewable by seperate parties when punching or placing a node,
 -- both are disablable in settings if you only wish to have one.
+-- there are also less noticeable particles from the surrounding nodes when one is dug
 
 --NOTE: Punch particles already exist and are built in but this mod simply adds more for beauty
 
@@ -24,12 +25,17 @@ local function get_node_side_particles(pos, i)
 	return sides[i]
 end
 
-local function particle_node(pos, node)
+local function particle_node(pos, node, inside)
 	local def = minetest.registered_nodes[node.name]
 	for i=1, 6 do
 		for _i = 1, 10 do
 			local roundnode = minetest.get_node(get_node_side_particles(pos, i))
-			if not roundnode or roundnode and (roundnode.name == "air" or roundnode.name == "ignore") then
+			local _node = node
+			if inside then
+				_node = roundnode
+			end
+
+			if not roundnode or roundnode and (roundnode.name == "air" or roundnode.name == "ignore") or inside then
 				minetest.add_particle({
 					pos = get_node_side_particles(pos, i),
 					velocity = vector.add(vector.zero(), { x = math.random(-10, 10)/100, y = math.random(-10, 10)/100, z = math.random(-10, 10)/100 }),
@@ -39,7 +45,7 @@ local function particle_node(pos, node)
 					collisiondetection = true,
 					vertical = false,
 					drag = vector.new(1,1,1),
-					node = node,
+					node = _node,
 					node_tile = i,
 				})
 			end
@@ -60,4 +66,10 @@ minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack
 		end
     particle_node(pos, newnode)
   end
+end)
+
+minetest.register_on_dignode(function(pos, oldnode, digger)
+	if dug_particles then
+		particle_node(pos, oldnode, true)
+	end
 end)
