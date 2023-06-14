@@ -6,6 +6,8 @@
 
 local punch_particles = minetest.settings:get_bool("punch_particles", true)
 local place_particles = minetest.settings:get_bool("place_particles", true)
+local dug_particles = minetest.settings:get_bool("dug_particles", true)
+
 
 
 local function get_node_side_particles(pos, i)
@@ -25,19 +27,22 @@ end
 local function particle_node(pos, node)
 	local def = minetest.registered_nodes[node.name]
 	for i=1, 6 do
-		for i = 1, 10 do
-			minetest.add_particle({
-				pos = get_node_side_particles(pos, i),
-				velocity = vector.add(vector.zero(), { x = math.random(-10, 10)/100, y = math.random(-10, 10)/100, z = math.random(-10, 10)/100 }),
-				acceleration = { x = 0, y = -9.81, z = 0 },
-				expirationtime = math.random(5,40)/100,
-				size = 1,
-				collisiondetection = true,
-				vertical = false,
-				drag = vector.new(1,1,1),
-				node = node,
-				node_tile = math.random(6),
-			})
+		for _i = 1, 10 do
+			local roundnode = minetest.get_node(get_node_side_particles(pos, i))
+			if not roundnode or roundnode and (roundnode.name == "air" or roundnode.name == "ignore") then
+				minetest.add_particle({
+					pos = get_node_side_particles(pos, i),
+					velocity = vector.add(vector.zero(), { x = math.random(-10, 10)/100, y = math.random(-10, 10)/100, z = math.random(-10, 10)/100 }),
+					acceleration = { x = 0, y = -9.81, z = 0 },
+					expirationtime = math.random(5,40)/100,
+					size = 1,
+					collisiondetection = true,
+					vertical = false,
+					drag = vector.new(1,1,1),
+					node = node,
+					node_tile = i,
+				})
+			end
 		end
 	end
 end
@@ -50,6 +55,9 @@ end)
 
 minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack, pointed_thing)
   if place_particles then
+		if pointed_thing.type == "node" and minetest.get_node(pointed_thing.under) then
+			particle_node(pointed_thing.under, minetest.get_node(pointed_thing.under))
+		end
     particle_node(pos, newnode)
   end
 end)
